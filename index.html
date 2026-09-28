@@ -1,0 +1,1769 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Workout App</title>
+<meta name="description" content="Osobni appka na trenink - knihovna cviku, kruhaky a AMRAP/EMOM/stopky timer.">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#141414">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Workout App">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: dark;
+    --bg: #141414;
+    --surface: #1e1e1e;
+    --surface-2: #272727;
+    --surface-3: #313131;
+    --border: #3d3d3d;
+    --text: #ececec;
+    --text-dim: #a3a3a3;
+    --text-faint: #707070;
+    --accent: #d8d2c4;
+    --accent-strong: #f0ebe0;
+    --accent-ink: #141414;
+    --rest: #5c7a82;
+    --rest-strong: #7ea0a9;
+    --danger: #b1493a;
+    --danger-strong: #d15f4e;
+    --good: #7a9a5d;
+    --font-display: 'Oswald', 'Arial Narrow', sans-serif;
+    --font-body: 'IBM Plex Sans', system-ui, sans-serif;
+    --font-mono: 'IBM Plex Mono', 'SF Mono', monospace;
+    --radius: 14px;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{font-family:var(--font-display);font-weight:600;letter-spacing:.01em;margin:0;text-wrap:balance;}
+  p{margin:0;}
+  button{font-family:inherit;}
+  input,select{font-family:inherit;}
+  ::selection{background:var(--accent);color:var(--accent-ink);}
+
+  .app{
+    height:100%;
+    display:flex;
+    flex-direction:column;
+    max-width:560px;
+    margin:0 auto;
+    position:relative;
+  }
+
+  .topbar{
+    flex:0 0 auto;
+    padding:18px 20px 14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .topbar-main{display:flex;align-items:center;gap:10px;min-width:0;}
+  .topbar .eyebrow{
+    font-family:var(--font-mono);
+    font-size:.7rem;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--accent);
+    display:block;
+    margin-bottom:2px;
+  }
+  .topbar h1{font-size:1.5rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .topbar .count{
+    font-family:var(--font-mono);
+    font-size:.8rem;
+    color:var(--text-faint);
+    white-space:nowrap;
+    flex:0 0 auto;
+  }
+  .back-btn{
+    flex:0 0 auto;
+    width:34px;height:34px;
+    border-radius:50%;
+    border:1px solid var(--border);
+    background:var(--surface);
+    color:var(--text-dim);
+    font-size:1.2rem;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+  }
+  .back-btn:active{background:var(--surface-2);}
+
+  .content{
+    flex:1 1 auto;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    padding:4px 20px 24px;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+
+  .tabbar{
+    flex:0 0 auto;
+    display:flex;
+    border-top:1px solid var(--border);
+    background:var(--surface);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  .tab-btn{
+    flex:1;
+    background:none;
+    border:none;
+    color:var(--text-faint);
+    padding:10px 4px 8px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+    cursor:pointer;
+  }
+  .tab-btn .glyph{font-size:1.25rem;line-height:1;}
+  .tab-btn .label{
+    font-family:var(--font-display);
+    font-size:.72rem;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+  }
+  .tab-btn.active{color:var(--accent-strong);}
+  .tab-btn:active{opacity:.7;}
+
+  /* ---- section headers / chips ---- */
+  .section-label{
+    font-family:var(--font-display);
+    font-size:.78rem;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--text-faint);
+    margin:6px 2px 0;
+  }
+  .chip-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{
+    font-family:var(--font-display);
+    font-size:.8rem;
+    letter-spacing:.03em;
+    text-transform:uppercase;
+    padding:9px 15px;
+    border-radius:999px;
+    border:1px solid var(--border);
+    background:var(--surface);
+    color:var(--text-dim);
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .chip.active{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);}
+
+  .star-btn{
+    flex:0 0 auto;
+    background:none;border:none;
+    font-size:1.3rem;line-height:1;
+    color:var(--text-faint);
+    padding:2px 4px;
+    cursor:pointer;
+  }
+  .star-btn.on{color:var(--accent-strong);}
+  .base-mark{color:var(--accent-strong);}
+  .copy-btn{
+    flex:0 0 auto;
+    background:none;border:none;
+    font-size:1.1rem;line-height:1;
+    color:var(--text-faint);
+    padding:2px 4px;
+    cursor:pointer;
+  }
+  .copy-btn:active{color:var(--text-dim);}
+
+  /* ---- cards ---- */
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:14px 16px;
+  }
+  .list-card{display:flex;flex-direction:column;gap:10px;cursor:pointer;}
+  .list-card:active{background:var(--surface-2);}
+  .list-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+  .list-card-name{font-family:var(--font-display);font-size:1.15rem;}
+  .list-card-stats{
+    font-family:var(--font-mono);
+    font-size:.76rem;
+    color:var(--text-dim);
+    margin-top:4px;
+  }
+  .list-card-sub{
+    font-size:.84rem;
+    color:var(--text-dim);
+    line-height:1.5;
+  }
+  .list-card-actions{display:flex;gap:8px;margin-top:2px;}
+  .list-card-arrow{color:var(--text-faint);font-size:1.3rem;align-self:center;}
+
+  .empty-note{
+    color:var(--text-faint);
+    font-size:.88rem;
+    padding:18px 4px;
+    text-align:center;
+    line-height:1.5;
+  }
+
+  /* ---- buttons ---- */
+  .btn{
+    font-family:var(--font-display);
+    font-size:.86rem;
+    letter-spacing:.03em;
+    text-transform:uppercase;
+    border-radius:10px;
+    padding:10px 16px;
+    border:1px solid var(--border);
+    background:var(--surface-2);
+    color:var(--text);
+    cursor:pointer;
+    text-align:center;
+    flex:1;
+  }
+  .btn:active{transform:scale(.98);}
+  .btn-primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);}
+  .btn-ghost{background:none;}
+  .btn-danger{background:var(--danger);border-color:var(--danger);color:#fff2ec;}
+  .btn-sm{padding:7px 12px;font-size:.74rem;flex:none;}
+  .btn-row{display:flex;gap:8px;}
+  .fab{
+    position:sticky;
+    bottom:4px;
+    align-self:flex-end;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:var(--accent);
+    color:var(--accent-ink);
+    border:none;
+    font-size:1.6rem;
+    box-shadow:0 6px 18px rgba(0,0,0,.4);
+    cursor:pointer;
+    z-index:5;
+  }
+
+  /* ---- forms ---- */
+  .field{display:flex;flex-direction:column;gap:6px;}
+  .field label{
+    font-family:var(--font-display);
+    font-size:.72rem;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--text-faint);
+  }
+  .field input[type="text"],
+  .field input[type="number"],
+  .field select{
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:11px 12px;
+    color:var(--text);
+    font-size:1rem;
+    width:100%;
+  }
+  .field input:focus,.field select:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  .field textarea{
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:9px 10px;
+    color:var(--text);
+    font-size:.74rem;
+    font-family:var(--font-mono);
+    width:100%;
+    resize:vertical;
+  }
+  .field textarea:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  .field-row{display:flex;gap:10px;}
+  .field-row .field{flex:1;}
+  .hint{font-size:.76rem;color:var(--text-faint);}
+
+  /* ---- sheet / modal ---- */
+  .sheet-overlay{
+    position:fixed;inset:0;
+    background:rgba(0,0,0,.55);
+    display:flex;
+    align-items:flex-end;
+    z-index:40;
+  }
+  .sheet{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-bottom:none;
+    border-radius:20px 20px 0 0;
+    width:100%;
+    max-width:560px;
+    margin:0 auto;
+    max-height:88vh;
+    overflow-y:auto;
+    padding:8px 20px calc(24px + env(safe-area-inset-bottom,0px));
+    animation:sheet-up .18s ease-out;
+  }
+  @keyframes sheet-up{from{transform:translateY(24px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+  .sheet-handle{width:36px;height:4px;border-radius:2px;background:var(--border);margin:10px auto 14px;}
+  .sheet-title{font-size:1.2rem;margin-bottom:14px;}
+  .sheet form{display:flex;flex-direction:column;gap:14px;}
+
+  .picker-row{display:flex;gap:8px;align-items:flex-end;}
+  .picker-row .field{flex:1;}
+
+  .selected-item{
+    display:flex;align-items:center;gap:8px;
+    padding:9px 0;border-bottom:1px solid var(--border);
+  }
+  .selected-item:last-child{border-bottom:none;}
+  .selected-item .ex-name{flex:1;font-size:.92rem;}
+  .selected-item input[type="number"]{
+    width:56px;text-align:center;padding:6px 4px;
+    background:var(--surface-2);border:1px solid var(--border);border-radius:8px;color:var(--text);
+    font-family:var(--font-mono);
+  }
+  .icon-btn{
+    background:none;border:none;color:var(--text-dim);
+    font-size:1rem;padding:4px 6px;cursor:pointer;line-height:1;
+  }
+  .icon-btn.danger{color:var(--danger-strong);}
+
+  /* ---- exercise table ---- */
+  .table-header{
+    display:flex;gap:8px;padding:0 2px;
+    font-family:var(--font-display);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--text-faint);
+  }
+  .table-header .col-ex{flex:1;}
+  .table-header .col-num{width:64px;text-align:center;}
+  .table-header .col-spacer{width:26px;}
+  .table-row{display:flex;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);}
+  .table-row:last-of-type{border-bottom:none;}
+  .table-row input.row-ex{
+    flex:1;min-width:0;
+    background:var(--surface-2);border:1px solid var(--border);border-radius:9px;
+    padding:9px 10px;color:var(--text);font-size:.92rem;
+  }
+  .table-row input.row-num{
+    width:64px;text-align:center;
+    background:var(--surface-2);border:1px solid var(--border);border-radius:9px;
+    padding:9px 4px;color:var(--text);font-size:.92rem;font-family:var(--font-mono);
+  }
+  .table-row input:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  .add-row-btn{
+    background:none;border:1px dashed var(--border);border-radius:10px;
+    color:var(--text-dim);padding:10px;font-size:.82rem;
+    font-family:var(--font-display);letter-spacing:.03em;text-transform:uppercase;
+    cursor:pointer;margin-top:8px;
+  }
+  .workout-note{
+    background:var(--surface-2);border:1px solid var(--border);border-radius:10px;
+    padding:9px 11px;color:var(--text-dim);font-size:.86rem;width:100%;
+  }
+  .workout-note:focus{outline:2px solid var(--accent);outline-offset:1px;}
+
+  .tip-banner{
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:12px 14px;
+    font-size:.82rem;
+    color:var(--text-dim);
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+  }
+  .tip-banner .close{background:none;border:none;color:var(--text-faint);font-size:1rem;cursor:pointer;flex:0 0 auto;}
+
+  /* ---- run overlay ---- */
+  .run-overlay{
+    position:fixed;inset:0;
+    background:var(--bg);
+    z-index:50;
+    display:flex;
+    flex-direction:column;
+    padding:calc(18px + env(safe-area-inset-top,0px)) 22px calc(22px + env(safe-area-inset-bottom,0px));
+    transition:background-color .35s ease;
+  }
+  .run-overlay.phase-work{background:#221f1c;}
+  .run-overlay.phase-rest{background:#0f171a;}
+  .run-overlay.phase-roundrest{background:#0f171a;}
+  .run-overlay.phase-done{background:#101a0d;}
+
+  .run-top{display:flex;justify-content:space-between;align-items:center;}
+  .run-round{
+    font-family:var(--font-mono);font-size:.8rem;color:var(--text-dim);
+    letter-spacing:.04em;
+  }
+  .run-sound{background:none;border:1px solid var(--border);border-radius:8px;color:var(--text-dim);padding:6px 10px;font-size:.85rem;}
+
+  .run-mid{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;
+  }
+  .run-phase-label{
+    font-family:var(--font-display);font-size:.9rem;letter-spacing:.16em;text-transform:uppercase;color:var(--text-dim);
+  }
+  .run-phase-label.work{color:var(--accent-strong);}
+  .run-phase-label.rest,.run-phase-label.roundrest{color:var(--rest-strong);}
+  .run-exercise{font-family:var(--font-display);font-size:1.7rem;padding:0 6px;text-wrap:balance;}
+  .run-timer{
+    font-family:var(--font-mono);
+    font-variant-numeric:tabular-nums;
+    font-size:5.2rem;
+    font-weight:600;
+    line-height:1;
+    margin:6px 0;
+  }
+  .run-next{font-size:.86rem;color:var(--text-faint);}
+  .run-next b{color:var(--text-dim);font-weight:600;}
+  .run-counter-row{
+    display:flex;align-items:center;gap:14px;margin-top:8px;
+    font-family:var(--font-mono);color:var(--text-dim);font-size:1rem;
+  }
+  .run-counter-row .btn{flex:none;padding:10px 18px;}
+
+  .run-progress{
+    height:5px;border-radius:3px;background:var(--surface-3);overflow:hidden;width:100%;
+  }
+  .run-progress-bar{height:100%;background:var(--accent);border-radius:3px;transition:width .1s linear;}
+  .phase-rest .run-progress-bar,.phase-roundrest .run-progress-bar{background:var(--rest-strong);}
+
+  .run-controls{display:flex;gap:10px;margin-top:18px;}
+  .run-controls .btn{padding:14px 10px;font-size:.8rem;}
+
+  @media (max-width:380px){
+    .run-timer{font-size:4.2rem;}
+    .run-exercise{font-size:1.4rem;}
+  }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="topbar">
+    <div class="topbar-main">
+      <button class="back-btn" id="backBtn" type="button" aria-label="Zpět" hidden>&lsaquo;</button>
+      <div style="min-width:0;">
+        <span class="eyebrow" id="viewEyebrow">Workout App</span>
+        <h1 id="viewTitle">Knihovna</h1>
+      </div>
+      <button class="back-btn" id="titleEditBtn" type="button" aria-label="Přejmenovat" hidden>&#9998;</button>
+    </div>
+    <div class="count" id="viewCount"></div>
+  </div>
+  <main class="content" id="content"></main>
+  <nav class="tabbar">
+    <button class="tab-btn active" data-tab="library">
+      <span class="glyph">&#9673;</span>
+      <span class="label">Knihovna</span>
+    </button>
+    <button class="tab-btn" data-tab="circuits">
+      <span class="glyph">&#9635;</span>
+      <span class="label">Kruháče</span>
+    </button>
+  </nav>
+</div>
+
+<datalist id="knownExercises"></datalist>
+
+<div class="sheet-overlay" id="sheetOverlay" hidden>
+  <div class="sheet" id="sheet"></div>
+</div>
+
+<div class="run-overlay" id="runOverlay" hidden>
+  <div class="run-top">
+    <span class="run-round" id="runRound">Kolo 1/1</span>
+    <button class="run-sound" id="runSoundBtn" type="button">Zvuk: vyp</button>
+  </div>
+  <div class="run-mid">
+    <span class="run-phase-label" id="runPhaseLabel">Připrav se</span>
+    <div class="run-timer" id="runTimer">10</div>
+    <div class="run-exercise" id="runExercise"></div>
+    <div class="run-progress"><div class="run-progress-bar" id="runProgressBar" style="width:0%"></div></div>
+    <div class="run-next" id="runNext"></div>
+    <div class="run-counter-row" id="runCounterRow" hidden>
+      <span id="runCounterLabel">Kola: 0</span>
+      <button class="btn btn-primary" id="runCounterBtn" type="button">+1 kolo</button>
+    </div>
+  </div>
+  <div class="run-controls">
+    <button class="btn" id="runSkipBtn" type="button">Přeskočit</button>
+    <button class="btn btn-primary" id="runPauseBtn" type="button">Pauza</button>
+    <button class="btn btn-danger" id="runStopBtn" type="button">Konec</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var STORAGE_KEY = 'kruhac_state_v2';
+  var LEGACY_KEY = 'kruhac_state_v1';
+  var TIP_KEY = 'kruhac_hide_tip_v1';
+  var PREP_SECONDS = 10;
+
+  function uid(){
+    if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return 'id-' + Math.random().toString(36).slice(2) + Date.now();
+  }
+
+  function defaultState(){
+    var typePush = {id:uid(), name:'Push'};
+    var typePull = {id:uid(), name:'Pull'};
+    var typeKb = {id:uid(), name:'Kettlebell fullbody'};
+    var typeChipper = {id:uid(), name:'Chipper'};
+
+    var workouts = [
+      {
+        id:uid(), typeId:typePush.id, name:'Push A', note:'4 série, pauza dle potřeby',
+        isBase:true,
+        skills:[],
+        rows:[
+          {id:uid(), exercise:'Bench press s jednoručkami', weight:'22', reps:'8'},
+          {id:uid(), exercise:'Shoulder press s jednoručkami', weight:'16', reps:'10'},
+          {id:uid(), exercise:'Kliky', weight:'tělo', reps:'15'}
+        ]
+      },
+      {
+        id:uid(), typeId:typeChipper.id, name:'AMRAP 30 min', note:'Co nejvíc kol za 30 min',
+        isBase:true,
+        skills:[
+          {id:uid(), name:'Muscle-upy', note:'5x pokus'},
+          {id:uid(), name:'Stojka', note:'freestanding, 3x30s'}
+        ],
+        rows:[
+          {id:uid(), exercise:'Kettlebell swings', weight:'24', reps:'15'},
+          {id:uid(), exercise:'Goblet squat', weight:'24', reps:'12'},
+          {id:uid(), exercise:'Shyby', weight:'tělo', reps:'8'},
+          {id:uid(), exercise:'Výpady vzad', weight:'16', reps:'10/noha'}
+        ]
+      }
+    ];
+
+    var circuits = [
+      {
+        id:uid(), name:'Push kruháč', rounds:4,
+        restBetweenExercises:20, restBetweenRounds:90,
+        items:[
+          {name:'Kliky', workSec:40},
+          {name:'Shoulder press s jednoručkami', workSec:40},
+          {name:'Thruster s kettlebell', workSec:40},
+          {name:'Plank', workSec:40}
+        ]
+      },
+      {
+        id:uid(), name:'Full-body chipper', rounds:1,
+        restBetweenExercises:15, restBetweenRounds:60,
+        items:[
+          {name:'Kettlebell swings', workSec:60},
+          {name:'Goblet squat', workSec:60},
+          {name:'Shyby', workSec:45},
+          {name:'Výpady vzad', workSec:60},
+          {name:'Burpees', workSec:45}
+        ]
+      }
+    ];
+
+    return {types:[typePush, typePull, typeKb, typeChipper], workouts:workouts, circuits:circuits};
+  }
+
+  function migrateLegacy(){
+    try{
+      var raw = localStorage.getItem(LEGACY_KEY);
+      if(!raw) return null;
+      var old = JSON.parse(raw);
+      if(!old || !Array.isArray(old.exercises) || !Array.isArray(old.circuits)) return null;
+      var exById = {};
+      old.exercises.forEach(function(e){ exById[e.id] = e.name; });
+      var circuits = old.circuits.map(function(c){
+        return {
+          id:c.id, name:c.name, rounds:c.rounds,
+          restBetweenExercises:c.restBetweenExercises, restBetweenRounds:c.restBetweenRounds,
+          items:(c.items||[]).map(function(it){
+            return {name: exById[it.exerciseId] || '(smazaný cvik)', workSec: it.workSec};
+          })
+        };
+      });
+      var fresh = defaultState();
+      fresh.circuits = circuits.length ? circuits : fresh.circuits;
+      return fresh;
+    }catch(e){ return null; }
+  }
+
+  function normalizeState(d){
+    if(d && Array.isArray(d.workouts)){
+      d.workouts.forEach(function(w){ if(!Array.isArray(w.skills)) w.skills = []; });
+    }
+    return d;
+  }
+
+  function isValidStateShape(d){
+    return !!(d && Array.isArray(d.types) && Array.isArray(d.workouts) && Array.isArray(d.circuits));
+  }
+
+  function loadState(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){
+        var parsed = JSON.parse(raw);
+        if(isValidStateShape(parsed)) return normalizeState(parsed);
+      }
+    }catch(e){}
+    var migrated = migrateLegacy();
+    var d = normalizeState(migrated || defaultState());
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); }catch(e){}
+    return d;
+  }
+
+  function saveState(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+  }
+
+  var state = loadState();
+  var activeTab = 'library';
+  var libView = 'types';     // 'types' | 'workouts' | 'table'
+  var libTypeId = null;
+  var libWorkoutId = null;
+
+  function czCount(n, one, few, many){
+    if(n===1) return n+' '+one;
+    if(n>=2 && n<=4) return n+' '+few;
+    return n+' '+many;
+  }
+
+  function esc(s){
+    return String(s==null?'':s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function refreshKnownExercises(){
+    var set = {};
+    state.workouts.forEach(function(w){
+      w.rows.forEach(function(r){ if(r.exercise) set[r.exercise]=1; });
+      (w.skills||[]).forEach(function(s){ if(s.name) set[s.name]=1; });
+    });
+    state.circuits.forEach(function(c){ c.items.forEach(function(it){ if(it.name) set[it.name]=1; }); });
+    var dl = document.getElementById('knownExercises');
+    dl.innerHTML = Object.keys(set).sort().map(function(n){ return '<option value="'+esc(n)+'">'; }).join('');
+  }
+
+  // ---------------- rendering: shell ----------------
+
+  var elContent = document.getElementById('content');
+  var elTitle = document.getElementById('viewTitle');
+  var elEyebrow = document.getElementById('viewEyebrow');
+  var elCount = document.getElementById('viewCount');
+  var backBtn = document.getElementById('backBtn');
+  var titleEditBtn = document.getElementById('titleEditBtn');
+
+  function setActiveTab(tab){
+    activeTab = tab;
+    var btns = document.querySelectorAll('.tab-btn');
+    btns.forEach(function(b){ b.classList.toggle('active', b.dataset.tab===tab); });
+    if(tab==='library'){ libView='types'; libTypeId=null; libWorkoutId=null; }
+    render();
+  }
+
+  document.querySelectorAll('.tab-btn').forEach(function(b){
+    b.addEventListener('click', function(){ setActiveTab(b.dataset.tab); });
+  });
+
+  backBtn.addEventListener('click', function(){
+    if(activeTab==='library'){
+      if(libView==='table'){ libView='workouts'; libWorkoutId=null; }
+      else if(libView==='workouts'){ libView='types'; libTypeId=null; }
+      render();
+    }
+  });
+
+  function render(){
+    refreshKnownExercises();
+    titleEditBtn.hidden = true;
+    titleEditBtn.onclick = null;
+    if(activeTab==='library') renderLibrary();
+    else renderCircuits();
+  }
+
+  // ---------------- library: types ----------------
+
+  function getType(id){ return state.types.filter(function(t){return t.id===id;})[0] || null; }
+  function workoutsOfType(typeId){ return state.workouts.filter(function(w){ return w.typeId===typeId; }); }
+
+  function renderLibrary(){
+    backBtn.hidden = (libView==='types');
+    if(libView==='types') renderTypesList();
+    else if(libView==='workouts') renderWorkoutsList();
+    else renderWorkoutTable();
+  }
+
+  function renderTypesList(){
+    elEyebrow.textContent = 'Workout App';
+    elTitle.textContent = 'Knihovna';
+    elCount.textContent = czCount(state.types.length, 'druh', 'druhy', 'druhů');
+
+    var html = '';
+    if(state.types.length===0){
+      html += '<p class="empty-note">Zatím žádný druh tréninku. Přidej první tlačítkem dole.</p>';
+    } else {
+      state.types.forEach(function(t){
+        var ws = workoutsOfType(t.id);
+        var names = ws.map(function(w){ return (w.isBase?'&#9733; ':'')+esc(w.name); }).join(' &middot; ') || 'zatím žádný trénink';
+        html += '<div class="card list-card" data-type="'+t.id+'">' +
+          '<div class="list-card-head">' +
+            '<div>' +
+              '<div class="list-card-name">'+esc(t.name)+'</div>' +
+              '<div class="list-card-stats">'+czCount(ws.length,'trénink','tréninky','tréninků')+'</div>' +
+            '</div>' +
+            '<span class="list-card-arrow">&rsaquo;</span>' +
+          '</div>' +
+          '<div class="list-card-sub">'+names+'</div>' +
+        '</div>';
+      });
+    }
+    html += '<button class="fab" id="addTypeBtn" type="button" aria-label="Přidat druh">+</button>';
+    html += '<button type="button" class="btn btn-ghost btn-sm" id="backupBtn" style="align-self:center;">Zálohovat / přenést data</button>';
+    elContent.innerHTML = html;
+
+    document.querySelectorAll('[data-type]').forEach(function(c){
+      c.addEventListener('click', function(){ libTypeId=c.dataset.type; libView='workouts'; render(); });
+    });
+    document.getElementById('backupBtn').addEventListener('click', openBackupSheet);
+    document.getElementById('addTypeBtn').addEventListener('click', openTypeSheet.bind(null,null));
+  }
+
+  function openTypeSheet(typeId){
+    var t = typeId ? getType(typeId) : null;
+    var html = '<div class="sheet-handle"></div>' +
+      '<h2 class="sheet-title">'+(t?'Upravit druh':'Nový druh tréninku')+'</h2>' +
+      '<form id="typeForm">' +
+        '<div class="field"><label for="typeName">Název</label>' +
+          '<input type="text" id="typeName" required value="'+(t?esc(t.name):'')+'" placeholder="např. Core"></div>' +
+        '<div class="btn-row">' +
+          (t ? '<button type="button" class="btn btn-danger" id="typeDeleteBtn">Smazat</button>' : '') +
+          '<button type="button" class="btn btn-ghost" id="typeCancelBtn">Zrušit</button>' +
+          '<button type="submit" class="btn btn-primary">Uložit</button>' +
+        '</div>' +
+      '</form>';
+    openSheet(html);
+    document.getElementById('typeCancelBtn').addEventListener('click', closeSheet);
+    document.getElementById('typeForm').addEventListener('submit', function(ev){
+      ev.preventDefault();
+      var name = document.getElementById('typeName').value.trim();
+      if(!name) return;
+      if(t){ t.name = name; }
+      else { state.types.push({id:uid(), name:name}); }
+      saveState(); closeSheet(); render();
+    });
+    var delBtn = document.getElementById('typeDeleteBtn');
+    if(delBtn){
+      delBtn.addEventListener('click', function(){
+        if(delBtn.dataset.armed==='1'){
+          state.workouts = state.workouts.filter(function(w){ return w.typeId!==t.id; });
+          state.types = state.types.filter(function(x){ return x.id!==t.id; });
+          saveState(); closeSheet(); render();
+        } else {
+          delBtn.dataset.armed='1';
+          delBtn.textContent='Smazat i s tréninky?';
+        }
+      });
+    }
+  }
+
+  // ---------------- backup / transfer data ----------------
+
+  function openBackupSheet(){
+    var json = JSON.stringify(state, null, 2);
+    var html = '<div class="sheet-handle"></div>' +
+      '<h2 class="sheet-title">Zálohovat / přenést data</h2>' +
+      '<div class="field">' +
+        '<label>Export &ndash; zkopíruj a ulož si to (třeba do Poznámek nebo pošli sám sobě)</label>' +
+        '<textarea id="exportArea" rows="6" readonly></textarea>' +
+      '</div>' +
+      '<div class="btn-row"><button type="button" class="btn" id="copyExportBtn">Kopírovat</button></div>' +
+      '<div class="field" style="margin-top:10px;">' +
+        '<label>Import &ndash; sem vlož zkopírovaný text z jiného zařízení</label>' +
+        '<textarea id="importArea" rows="6" placeholder="vlož sem zkopírovaná data"></textarea>' +
+      '</div>' +
+      '<p class="hint hint-alert" id="importErr" style="color:var(--danger-strong);display:none;">Nepodařilo se to přečíst &ndash; zkontroluj, že je vložený celý text.</p>' +
+      '<div class="btn-row">' +
+        '<button type="button" class="btn btn-ghost" id="backupCloseBtn">Zavřít</button>' +
+        '<button type="button" class="btn btn-danger" id="importBtn">Importovat (přepíše data tady)</button>' +
+      '</div>';
+    openSheet(html);
+    var exportArea = document.getElementById('exportArea');
+    exportArea.value = json;
+    document.getElementById('backupCloseBtn').addEventListener('click', closeSheet);
+    document.getElementById('copyExportBtn').addEventListener('click', function(){
+      var btn = this;
+      exportArea.focus();
+      exportArea.select();
+      exportArea.setSelectionRange(0, 999999);
+      var ok = false;
+      try{
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          navigator.clipboard.writeText(exportArea.value);
+          ok = true;
+        } else {
+          ok = document.execCommand('copy');
+        }
+      }catch(e){}
+      btn.textContent = ok ? 'Zkopírováno!' : 'Zkopíruj ručně (Cmd/Ctrl+C)';
+      setTimeout(function(){ btn.textContent = 'Kopírovat'; }, 2500);
+    });
+    document.getElementById('importBtn').addEventListener('click', function(){
+      var btn = this;
+      var errEl = document.getElementById('importErr');
+      errEl.style.display = 'none';
+      if(btn.dataset.armed==='1'){
+        var raw = document.getElementById('importArea').value.trim();
+        if(!raw) return;
+        try{
+          var parsed = JSON.parse(raw);
+          if(!parsed || !Array.isArray(parsed.types) || !Array.isArray(parsed.workouts) || !Array.isArray(parsed.circuits)){
+            throw new Error('bad shape');
+          }
+          state = normalizeState(parsed);
+          saveState();
+          closeSheet();
+          libView='types'; libTypeId=null; libWorkoutId=null;
+          render();
+        }catch(e){
+          errEl.style.display = 'block';
+          btn.dataset.armed=''; btn.textContent='Importovat (přepíše data tady)';
+        }
+      } else {
+        btn.dataset.armed='1';
+        btn.textContent='Opravdu přepsat? Klikni znovu';
+        setTimeout(function(){ btn.dataset.armed=''; btn.textContent='Importovat (přepíše data tady)'; }, 4000);
+      }
+    });
+  }
+
+  // ---------------- library: workouts within a type ----------------
+
+  function renderWorkoutsList(){
+    var t = getType(libTypeId);
+    if(!t){ libView='types'; renderTypesList(); return; }
+    elEyebrow.textContent = 'Knihovna';
+    elTitle.textContent = t.name;
+    var ws = workoutsOfType(t.id);
+    elCount.textContent = czCount(ws.length, 'trénink', 'tréninky', 'tréninků');
+    titleEditBtn.hidden = false;
+    titleEditBtn.onclick = function(){ openTypeSheet(t.id); };
+
+    var html = '';
+    if(ws.length===0){
+      html += '<p class="empty-note">V druhu &bdquo;'+esc(t.name)+'&ldquo; zatím nemáš žádný trénink.</p>';
+    } else {
+      ws.forEach(function(w){
+        var names = w.rows.map(function(r){return r.exercise?esc(r.exercise):null;}).filter(Boolean).join(' &middot; ') || 'zatím bez cviků';
+        html += '<div class="card list-card" data-workout="'+w.id+'">' +
+          '<div class="list-card-head">' +
+            '<div>' +
+              '<div class="list-card-name">'+esc(w.name)+'</div>' +
+              '<div class="list-card-stats">'+czCount(w.rows.length,'cvik','cviky','cviků')+'</div>' +
+            '</div>' +
+            '<button type="button" class="star-btn'+(w.isBase?' on':'')+'" data-star="'+w.id+'" aria-label="Základní trénink">'+(w.isBase?'&#9733;':'&#9734;')+'</button>' +
+            '<button type="button" class="copy-btn" data-copy="'+w.id+'" aria-label="Kopírovat trénink">&#10697;</button>' +
+            '<span class="list-card-arrow">&rsaquo;</span>' +
+          '</div>' +
+          '<div class="list-card-sub">'+names+'</div>' +
+        '</div>';
+      });
+    }
+    html += '<button class="fab" id="addWorkoutBtn" type="button" aria-label="Nový trénink">+</button>';
+    elContent.innerHTML = html;
+
+    document.querySelectorAll('[data-workout]').forEach(function(c){
+      c.addEventListener('click', function(){ libWorkoutId=c.dataset.workout; libView='table'; render(); });
+    });
+    document.querySelectorAll('[data-star]').forEach(function(b){
+      b.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        var id = b.dataset.star;
+        var makeBase = !state.workouts.filter(function(x){return x.id===id;})[0].isBase;
+        workoutsOfType(t.id).forEach(function(w2){ w2.isBase = (w2.id===id) ? makeBase : false; });
+        saveState();
+        renderWorkoutsList();
+      });
+    });
+    document.querySelectorAll('[data-copy]').forEach(function(b){
+      b.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        var id = b.dataset.copy;
+        var src = state.workouts.filter(function(x){return x.id===id;})[0];
+        if(!src) return;
+        openCopyConfirmSheet(src);
+      });
+    });
+    document.getElementById('addWorkoutBtn').addEventListener('click', openWorkoutSheet.bind(null,null));
+  }
+
+  function duplicateWorkout(workoutId){
+    var w = state.workouts.filter(function(x){return x.id===workoutId;})[0];
+    if(!w) return null;
+    var copy = {
+      id: uid(),
+      typeId: w.typeId,
+      name: w.name + ' (kopie)',
+      note: w.note || '',
+      isBase: false,
+      skills: (w.skills||[]).map(function(s){ return {id:uid(), name:s.name, note:s.note||''}; }),
+      rows: w.rows.map(function(r){ return {id:uid(), exercise:r.exercise, weight:r.weight, reps:r.reps}; })
+    };
+    var idx = state.workouts.findIndex(function(x){ return x.id===w.id; });
+    state.workouts.splice(idx+1, 0, copy);
+    saveState();
+    return copy;
+  }
+
+  function openCopyConfirmSheet(w){
+    var html = '<div class="sheet-handle"></div>' +
+      '<h2 class="sheet-title">Zkopírovat trénink?</h2>' +
+      '<p class="hint">Vytvoří se kopie &bdquo;'+esc(w.name)+'&ldquo; se všemi cviky, vahami a opakováními.</p>' +
+      '<div class="btn-row">' +
+        '<button type="button" class="btn btn-ghost" id="copyNoBtn">Ne</button>' +
+        '<button type="button" class="btn btn-primary" id="copyYesBtn">Ano, kopírovat</button>' +
+      '</div>';
+    openSheet(html);
+    document.getElementById('copyNoBtn').addEventListener('click', closeSheet);
+    document.getElementById('copyYesBtn').addEventListener('click', function(){
+      var copy = duplicateWorkout(w.id);
+      closeSheet();
+      if(copy){
+        libTypeId = w.typeId;
+        libView = 'workouts';
+        libWorkoutId = null;
+        render();
+      }
+    });
+  }
+
+  function openWorkoutSheet(workoutId){
+    var w = workoutId ? state.workouts.filter(function(x){return x.id===workoutId;})[0] : null;
+    var html = '<div class="sheet-handle"></div>' +
+      '<h2 class="sheet-title">'+(w?'Upravit trénink':'Nový trénink')+'</h2>' +
+      '<form id="workoutForm">' +
+        '<div class="field"><label for="wName">Název</label>' +
+          '<input type="text" id="wName" required value="'+(w?esc(w.name):'')+'" placeholder="např. AMRAP 30 min"></div>' +
+        '<div class="field"><label for="wNote">Poznámka (nepovinné)</label>' +
+          '<input type="text" id="wNote" value="'+(w?esc(w.note||''):'')+'" placeholder="např. 3 kola, formát, tempo"></div>' +
+        '<div class="btn-row">' +
+          (w ? '<button type="button" class="btn btn-danger" id="wDeleteBtn">Smazat</button>' : '') +
+          '<button type="button" class="btn btn-ghost" id="wCancelBtn">Zrušit</button>' +
+          '<button type="submit" class="btn btn-primary">Uložit</button>' +
+        '</div>' +
+      '</form>';
+    openSheet(html);
+    document.getElementById('wCancelBtn').addEventListener('click', closeSheet);
+    document.getElementById('workoutForm').addEventListener('submit', function(ev){
+      ev.preventDefault();
+      var name = document.getElementById('wName').value.trim();
+      if(!name) return;
+      var note = document.getElementById('wNote').value.trim();
+      if(w){ w.name=name; w.note=note; }
+      else { state.workouts.push({id:uid(), typeId:libTypeId, name:name, note:note, isBase:false, skills:[], rows:[]}); }
+      saveState(); closeSheet(); render();
+    });
+    var delBtn = document.getElementById('wDeleteBtn');
+    if(delBtn){
+      delBtn.addEventListener('click', function(){
+        if(delBtn.dataset.armed==='1'){
+          state.workouts = state.workouts.filter(function(x){ return x.id!==w.id; });
+          saveState(); closeSheet();
+          libView='workouts'; libWorkoutId=null;
+          render();
+        } else {
+          delBtn.dataset.armed='1';
+          delBtn.textContent='Opravdu smazat?';
+        }
+      });
+    }
+  }
+
+  // ---------------- library: exercise table for one workout ----------------
+
+  function renderWorkoutTable(){
+    var w = state.workouts.filter(function(x){return x.id===libWorkoutId;})[0];
+    if(!w){ libView='workouts'; renderWorkoutsList(); return; }
+    var t = getType(w.typeId);
+    elEyebrow.textContent = t ? t.name : 'Knihovna';
+    elTitle.textContent = w.name;
+    elCount.textContent = czCount(w.rows.length, 'cvik', 'cviky', 'cviků');
+    titleEditBtn.hidden = false;
+    titleEditBtn.onclick = function(){ openWorkoutSheet(w.id); };
+
+    var html = '<input type="text" class="workout-note" id="workoutNoteInput" placeholder="Poznámka k tréninku" value="'+esc(w.note||'')+'">' +
+      '<div>' +
+        '<div class="section-label">Skill (15 min)</div>' +
+        '<div class="table-header"><span class="col-ex">Skill</span><span class="col-ex">Poznámka</span><span class="col-spacer"></span></div>' +
+        '<div id="skillRows"></div>' +
+        '<button type="button" class="add-row-btn" id="addSkillBtn">+ Přidat skill</button>' +
+      '</div>' +
+      '<div>' +
+        '<div class="section-label">Formát tréninku</div>' +
+        '<div class="chip-row">' +
+          '<button type="button" class="chip" data-fmt="amrap">AMRAP</button>' +
+          '<button type="button" class="chip" data-fmt="emom">EMOM</button>' +
+          '<button type="button" class="chip" data-fmt="stopwatch">Stopky</button>' +
+        '</div>' +
+      '</div>' +
+      '<div>' +
+        '<div class="table-header"><span class="col-ex">Cvik</span><span class="col-num">Váha (kg)</span><span class="col-num">Opak.</span><span class="col-spacer"></span></div>' +
+        '<div id="tableRows"></div>' +
+        '<button type="button" class="add-row-btn" id="addRowBtn">+ Přidat cvik</button>' +
+      '</div>' +
+      '<div class="btn-row" style="margin-top:6px;">' +
+        '<button type="button" class="btn btn-ghost btn-sm" id="copyWorkoutBtn">Kopírovat trénink</button>' +
+        '<button type="button" class="btn btn-danger btn-sm" id="deleteWorkoutBtn">Smazat trénink</button>' +
+      '</div>';
+    elContent.innerHTML = html;
+
+    document.getElementById('copyWorkoutBtn').addEventListener('click', function(){
+      openCopyConfirmSheet(w);
+    });
+
+    document.querySelectorAll('[data-fmt]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var kind = b.dataset.fmt;
+        if(kind==='stopwatch'){
+          startStopwatchRun(w);
+          return;
+        }
+        openFormatSheet(kind, w);
+      });
+    });
+
+    function renderRows(){
+      var rowsEl = document.getElementById('tableRows');
+      rowsEl.innerHTML = w.rows.map(function(r){
+        return '<div class="table-row" data-row="'+r.id+'">' +
+          '<input class="row-ex" type="text" list="knownExercises" placeholder="název cviku" value="'+esc(r.exercise)+'" data-field="exercise">' +
+          '<input class="row-num" type="text" inputmode="decimal" placeholder="kg" value="'+esc(r.weight)+'" data-field="weight">' +
+          '<input class="row-num" type="text" placeholder="opak." value="'+esc(r.reps)+'" data-field="reps">' +
+          '<button type="button" class="icon-btn danger" data-remove-row="'+r.id+'">&times;</button>' +
+        '</div>';
+      }).join('');
+      rowsEl.querySelectorAll('input[data-field]').forEach(function(inp){
+        inp.addEventListener('input', function(){
+          var rowId = inp.closest('.table-row').dataset.row;
+          var row = w.rows.filter(function(x){return x.id===rowId;})[0];
+          if(row){ row[inp.dataset.field] = inp.value; saveState(); }
+        });
+      });
+      rowsEl.querySelectorAll('[data-remove-row]').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          w.rows = w.rows.filter(function(x){ return x.id!==btn.dataset.removeRow; });
+          saveState();
+          renderRows();
+          elCount.textContent = czCount(w.rows.length, 'cvik', 'cviky', 'cviků');
+        });
+      });
+    }
+    renderRows();
+
+    document.getElementById('addRowBtn').addEventListener('click', function(){
+      w.rows.push({id:uid(), exercise:'', weight:'', reps:''});
+      saveState();
+      renderRows();
+      elCount.textContent = czCount(w.rows.length, 'cvik', 'cviky', 'cviků');
+      var last = document.querySelectorAll('#tableRows .row-ex');
+      if(last.length) last[last.length-1].focus();
+    });
+
+    function renderSkillRows(){
+      var rowsEl = document.getElementById('skillRows');
+      rowsEl.innerHTML = w.skills.map(function(s){
+        return '<div class="table-row" data-skill="'+s.id+'">' +
+          '<input class="row-ex" type="text" list="knownExercises" placeholder="např. Muscle-up" value="'+esc(s.name)+'" data-field="name">' +
+          '<input class="row-ex" type="text" placeholder="poznámka (nepovinné)" value="'+esc(s.note||'')+'" data-field="note">' +
+          '<button type="button" class="icon-btn danger" data-remove-skill="'+s.id+'">&times;</button>' +
+        '</div>';
+      }).join('');
+      rowsEl.querySelectorAll('input[data-field]').forEach(function(inp){
+        inp.addEventListener('input', function(){
+          var rowId = inp.closest('.table-row').dataset.skill;
+          var s = w.skills.filter(function(x){return x.id===rowId;})[0];
+          if(s){ s[inp.dataset.field] = inp.value; saveState(); }
+        });
+      });
+      rowsEl.querySelectorAll('[data-remove-skill]').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          w.skills = w.skills.filter(function(x){ return x.id!==btn.dataset.removeSkill; });
+          saveState();
+          renderSkillRows();
+        });
+      });
+    }
+    renderSkillRows();
+
+    document.getElementById('addSkillBtn').addEventListener('click', function(){
+      w.skills.push({id:uid(), name:'', note:''});
+      saveState();
+      renderSkillRows();
+      var last = document.querySelectorAll('#skillRows .row-ex');
+      if(last.length) last[last.length-2].focus();
+    });
+
+    document.getElementById('workoutNoteInput').addEventListener('input', function(ev){
+      w.note = ev.target.value;
+      saveState();
+    });
+
+    document.getElementById('deleteWorkoutBtn').addEventListener('click', function(ev){
+      var btn = ev.currentTarget;
+      if(btn.dataset.armed==='1'){
+        state.workouts = state.workouts.filter(function(x){ return x.id!==w.id; });
+        saveState();
+        libView='workouts'; libWorkoutId=null;
+        render();
+      } else {
+        btn.dataset.armed='1';
+        btn.textContent='Opravdu smazat?';
+      }
+    });
+  }
+
+  function openFormatSheet(kind, w){
+    var minutes = 20;
+    var intervalSec = 60;
+    var html = '<div class="sheet-handle"></div>' +
+      '<h2 class="sheet-title">'+(kind==='amrap'?'AMRAP timer':'EMOM timer')+'</h2>' +
+      '<form id="formatForm">' +
+        '<div class="field"><label for="fmtMinutes">Celková délka (min)</label>' +
+          '<input type="number" id="fmtMinutes" min="1" value="'+minutes+'"></div>' +
+        (kind==='emom' ? ('<div class="field"><label for="fmtInterval">Interval (s)</label>' +
+          '<input type="number" id="fmtInterval" min="10" step="5" value="'+intervalSec+'"></div>') : '') +
+        '<p class="hint">'+(kind==='amrap' ? 'Odpočítá celý čas, kola si po každém kole odklikáváš tlačítkem.' : 'Na začátku každého intervalu tě appka upozorní zvukem.') + '</p>' +
+        '<div class="btn-row">' +
+          '<button type="button" class="btn btn-ghost" id="fmtCancelBtn">Zrušit</button>' +
+          '<button type="submit" class="btn btn-primary" id="fmtStartBtn">Spustit</button>' +
+        '</div>' +
+      '</form>';
+    openSheet(html);
+    document.getElementById('fmtCancelBtn').addEventListener('click', closeSheet);
+    document.getElementById('formatForm').addEventListener('submit', function(ev){
+      ev.preventDefault();
+      var m = Math.max(1, +document.getElementById('fmtMinutes').value || 20);
+      var fmt;
+      if(kind==='amrap'){
+        fmt = {type:'amrap', minutes:m};
+      } else {
+        var iv = Math.max(10, +document.getElementById('fmtInterval').value || 60);
+        fmt = {type:'emom', minutes:m, intervalSec:iv};
+      }
+      closeSheet();
+      startFormatRun(kind, w, fmt);
+    });
+  }
+
+  // ---------------- circuits (timer plans) ----------------
+
+  function estimateSeconds(c){
+    var perRound = 0;
+    c.items.forEach(function(it, idx){
+      perRound += (it.workSec||0);
+      if(idx < c.items.length-1) perRound += (c.restBetweenExercises||0);
+    });
+    var total = perRound * c.rounds + (c.restBetweenRounds||0) * Math.max(0, c.rounds-1) + PREP_SECONDS;
+    return total;
+  }
+  function fmtMin(sec){
+    var m = Math.round(sec/60);
+    return m < 1 ? '<1 min' : ('~'+m+' min');
+  }
+
+  function renderCircuits(){
+    backBtn.hidden = true;
+    elEyebrow.textContent = 'Workout App';
+    elTitle.textContent = 'Kruháče';
+    elCount.textContent = czCount(state.circuits.length, 'plán', 'plány', 'plánů');
+
+    var html = '';
+    if(state.circuits.length===0){
+      html += '<p class="empty-note">Zatím žádný kruháč. Poskládej si první z cviků.</p>';
+    } else {
+      state.circuits.forEach(function(c){
+        var names = c.items.map(function(it){ return esc(it.name); }).join(' &middot; ');
+        html += '<div class="card">' +
+          '<div class="list-card-head">' +
+            '<div>' +
+              '<div class="list-card-name">'+esc(c.name)+'</div>' +
+              '<div class="list-card-stats">'+c.rounds+'&times; kolo &middot; '+czCount(c.items.length,'cvik','cviky','cviků')+' &middot; '+fmtMin(estimateSeconds(c))+'</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="list-card-sub">'+names+'</div>' +
+          '<div class="list-card-actions">' +
+            '<button class="btn btn-primary" data-run="'+c.id+'">Spustit</button>' +
+            '<button class="btn btn-ghost btn-sm" data-edit="'+c.id+'">Upravit</button>' +
+          '</div>' +
+        '</div>';
+      });
+    }
+    html += '<button class="fab" id="addCircuitBtn" type="button" aria-label="Nový kruháč">+</button>';
+    elContent.innerHTML = html;
+
+    document.querySelectorAll('[data-run]').forEach(function(b){
+      b.addEventListener('click', function(){ startRun(b.dataset.run); });
+    });
+    document.querySelectorAll('[data-edit]').forEach(function(b){
+      b.addEventListener('click', function(){ openCircuitSheet(b.dataset.edit); });
+    });
+    var addBtn = document.getElementById('addCircuitBtn');
+    if(addBtn) addBtn.addEventListener('click', function(){ openCircuitSheet(null); });
+  }
+
+  function openCircuitSheet(cId){
+    var c = cId ? state.circuits.filter(function(x){return x.id===cId;})[0] : null;
+    var draft = c ? JSON.parse(JSON.stringify(c)) : {
+      id:uid(), name:'', rounds:3, restBetweenExercises:20, restBetweenRounds:60, items:[]
+    };
+
+    function itemsHtml(){
+      if(draft.items.length===0) return '<p class="hint">Zatím žádné cviky &ndash; přidej je níž.</p>';
+      return draft.items.map(function(it, idx){
+        return '<div class="selected-item" data-idx="'+idx+'">' +
+          '<span class="ex-name">'+esc(it.name)+'</span>' +
+          '<input type="number" min="5" step="5" value="'+it.workSec+'" data-role="worksec" data-idx="'+idx+'"> s' +
+          '<button type="button" class="icon-btn" data-move="up" data-idx="'+idx+'">&uarr;</button>' +
+          '<button type="button" class="icon-btn" data-move="down" data-idx="'+idx+'">&darr;</button>' +
+          '<button type="button" class="icon-btn danger" data-remove="'+idx+'">&times;</button>' +
+        '</div>';
+      }).join('');
+    }
+
+    var html = '<div class="sheet-handle"></div>' +
+      '<h2 class="sheet-title">'+(c?'Upravit kruháč':'Nový kruháč')+'</h2>' +
+      '<form id="circuitForm">' +
+        '<div class="field"><label for="cName">Název</label>' +
+          '<input type="text" id="cName" required value="'+esc(draft.name)+'" placeholder="např. Pull kruháč"></div>' +
+        '<div class="field-row">' +
+          '<div class="field"><label for="cRounds">Počet kol</label><input type="number" id="cRounds" min="1" value="'+draft.rounds+'"></div>' +
+          '<div class="field"><label for="cRestEx">Odpočinek mezi cviky (s)</label><input type="number" id="cRestEx" min="0" step="5" value="'+draft.restBetweenExercises+'"></div>' +
+        '</div>' +
+        '<div class="field"><label for="cRestRound">Odpočinek mezi koly (s)</label><input type="number" id="cRestRound" min="0" step="5" value="'+draft.restBetweenRounds+'"></div>' +
+        '<div class="section-label">Cviky v kruháči</div>' +
+        '<div id="selectedItems">'+itemsHtml()+'</div>' +
+        '<div class="picker-row">' +
+          '<div class="field"><label for="cNewEx">Přidat cvik</label><input type="text" id="cNewEx" list="knownExercises" placeholder="název cviku"></div>' +
+          '<button type="button" class="btn btn-sm" id="cAddExBtn">Přidat</button>' +
+        '</div>' +
+        '<div class="btn-row">' +
+          (c ? '<button type="button" class="btn btn-danger" id="cDeleteBtn">Smazat</button>' : '') +
+          '<button type="button" class="btn btn-ghost" id="cCancelBtn">Zrušit</button>' +
+          '<button type="submit" class="btn btn-primary">Uložit</button>' +
+        '</div>' +
+      '</form>';
+    openSheet(html);
+
+    function refreshItems(){
+      document.getElementById('selectedItems').innerHTML = itemsHtml();
+      bindItemEvents();
+    }
+    function bindItemEvents(){
+      document.querySelectorAll('[data-role="worksec"]').forEach(function(inp){
+        inp.addEventListener('change', function(){
+          var i = +inp.dataset.idx;
+          draft.items[i].workSec = Math.max(5, +inp.value||30);
+        });
+      });
+      document.querySelectorAll('[data-move]').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          var i = +btn.dataset.idx;
+          var dir = btn.dataset.move==='up' ? -1 : 1;
+          var j = i+dir;
+          if(j<0 || j>=draft.items.length) return;
+          var tmp = draft.items[i]; draft.items[i]=draft.items[j]; draft.items[j]=tmp;
+          refreshItems();
+        });
+      });
+      document.querySelectorAll('[data-remove]').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          draft.items.splice(+btn.dataset.remove, 1);
+          refreshItems();
+        });
+      });
+    }
+    bindItemEvents();
+
+    function addItemFromField(){
+      var field = document.getElementById('cNewEx');
+      var name = field.value.trim();
+      if(!name) return;
+      draft.items.push({name:name, workSec:40});
+      field.value='';
+      refreshItems();
+      field.focus();
+    }
+    document.getElementById('cAddExBtn').addEventListener('click', addItemFromField);
+    document.getElementById('cNewEx').addEventListener('keydown', function(ev){
+      if(ev.key==='Enter'){ ev.preventDefault(); addItemFromField(); }
+    });
+
+    document.getElementById('cCancelBtn').addEventListener('click', closeSheet);
+    document.getElementById('circuitForm').addEventListener('submit', function(ev){
+      ev.preventDefault();
+      draft.name = document.getElementById('cName').value.trim() || 'Kruháč';
+      draft.rounds = Math.max(1, +document.getElementById('cRounds').value || 1);
+      draft.restBetweenExercises = Math.max(0, +document.getElementById('cRestEx').value || 0);
+      draft.restBetweenRounds = Math.max(0, +document.getElementById('cRestRound').value || 0);
+      if(draft.items.length===0){
+        alertInline('Přidej aspoň jeden cvik.');
+        return;
+      }
+      if(c){
+        var i = state.circuits.findIndex(function(x){return x.id===c.id;});
+        state.circuits[i] = draft;
+      } else {
+        state.circuits.push(draft);
+      }
+      saveState();
+      closeSheet();
+      renderCircuits();
+    });
+    var delBtn = document.getElementById('cDeleteBtn');
+    if(delBtn){
+      delBtn.addEventListener('click', function(){
+        if(delBtn.dataset.armed==='1'){
+          state.circuits = state.circuits.filter(function(x){ return x.id!==c.id; });
+          saveState();
+          closeSheet();
+          renderCircuits();
+        } else {
+          delBtn.dataset.armed='1';
+          delBtn.textContent='Opravdu smazat?';
+        }
+      });
+    }
+  }
+
+  function alertInline(msg){
+    var form = document.querySelector('.sheet form');
+    if(!form) return;
+    var existing = form.querySelector('.hint-alert');
+    if(existing) existing.remove();
+    var p = document.createElement('p');
+    p.className = 'hint hint-alert';
+    p.style.color = 'var(--danger-strong)';
+    p.textContent = msg;
+    form.insertBefore(p, form.firstChild);
+  }
+
+  // ---------------- sheet plumbing ----------------
+
+  var sheetOverlay = document.getElementById('sheetOverlay');
+  var sheetEl = document.getElementById('sheet');
+  function openSheet(html){
+    refreshKnownExercises();
+    sheetEl.innerHTML = html;
+    sheetOverlay.hidden = false;
+  }
+  function closeSheet(){
+    sheetOverlay.hidden = true;
+    sheetEl.innerHTML = '';
+  }
+  sheetOverlay.addEventListener('click', function(ev){
+    if(ev.target===sheetOverlay) closeSheet();
+  });
+
+  // ---------------- timer / run engine ----------------
+
+  var runOverlay = document.getElementById('runOverlay');
+  var runRound = document.getElementById('runRound');
+  var runPhaseLabel = document.getElementById('runPhaseLabel');
+  var runTimer = document.getElementById('runTimer');
+  var runExercise = document.getElementById('runExercise');
+  var runNext = document.getElementById('runNext');
+  var runProgressBar = document.getElementById('runProgressBar');
+  var runPauseBtn = document.getElementById('runPauseBtn');
+  var runSkipBtn = document.getElementById('runSkipBtn');
+  var runStopBtn = document.getElementById('runStopBtn');
+  var runSoundBtn = document.getElementById('runSoundBtn');
+  var runCounterRow = document.getElementById('runCounterRow');
+  var runCounterLabel = document.getElementById('runCounterLabel');
+  var runCounterBtn = document.getElementById('runCounterBtn');
+
+  var run = null;
+  var soundOn = false;
+  var audioCtx = null;
+
+  function ensureAudio(){
+    if(!audioCtx){
+      try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){ audioCtx=null; }
+    } else if(audioCtx.state==='suspended'){
+      audioCtx.resume();
+    }
+  }
+  function beep(freq, dur, vol, type){
+    if(!soundOn || !audioCtx) return;
+    try{
+      var osc = audioCtx.createOscillator();
+      var gain = audioCtx.createGain();
+      osc.type = type||'sine';
+      osc.frequency.value = freq;
+      gain.gain.value = vol==null?0.25:vol;
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      var now = audioCtx.currentTime;
+      gain.gain.setValueAtTime(gain.gain.value, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+      osc.start(now);
+      osc.stop(now + dur);
+    }catch(e){}
+  }
+  function cueTick(){ beep(880, 0.08, 0.2, 'square'); }
+  function cueGo(){ beep(660,0.12,0.3,'sine'); setTimeout(function(){beep(990,0.18,0.3,'sine');},110); }
+  function cueRest(){ beep(440,0.18,0.25,'sine'); }
+  function cueDone(){ beep(523,0.15,0.3,'sine'); setTimeout(function(){beep(659,0.15,0.3,'sine');},140); setTimeout(function(){beep(784,0.28,0.3,'sine');},280); }
+
+  function buildSequence(c){
+    var seq = [{phase:'prep', label:'Připrav se', duration:PREP_SECONDS, round:1}];
+    for(var r=1; r<=c.rounds; r++){
+      c.items.forEach(function(it, idx){
+        seq.push({phase:'work', label: it.name, duration: it.workSec||30, round:r, idx:idx});
+        if(idx < c.items.length-1){
+          seq.push({phase:'rest', label:'Odpočinek', duration: c.restBetweenExercises||0, round:r, nextLabel: c.items[idx+1].name});
+        }
+      });
+      if(r < c.rounds){
+        seq.push({phase:'roundrest', label:'Odpočinek mezi koly', duration: c.restBetweenRounds||0, round:r, nextLabel: c.items[0].name});
+      }
+    }
+    seq.push({phase:'done', label:'Hotovo', duration:0, round:c.rounds});
+    return seq.filter(function(s){ return s.duration>0 || s.phase==='done'; });
+  }
+
+  function buildAmrapSequence(w, fmt){
+    var exList = w.rows.map(function(r){return r.exercise;}).filter(Boolean);
+    var seq = [{phase:'prep', label:'Připrav se', duration:PREP_SECONDS, exList:exList}];
+    seq.push({phase:'amrap', label:w.name, duration:(fmt.minutes||20)*60, exList:exList});
+    seq.push({phase:'done', label:'Hotovo', duration:0});
+    return seq;
+  }
+
+  function buildEmomSequence(w, fmt){
+    var exList = w.rows.map(function(r){return r.exercise;}).filter(Boolean);
+    var totalSec = (fmt.minutes||20)*60;
+    var interval = fmt.intervalSec||60;
+    var count = Math.max(1, Math.round(totalSec/interval));
+    var seq = [{phase:'prep', label:'Připrav se', duration:PREP_SECONDS, exList:exList}];
+    for(var i=1;i<=count;i++){
+      seq.push({phase:'emom', label:w.name, duration:interval, round:i, exList:exList});
+    }
+    seq.push({phase:'done', label:'Hotovo', duration:0});
+    return seq;
+  }
+
+  function startRun(circuitId){
+    var c = state.circuits.filter(function(x){return x.id===circuitId;})[0];
+    if(!c || c.items.length===0) return;
+    ensureAudio();
+    var seq = buildSequence(c);
+    run = {
+      kind:'circuit', circuit: c, sequence: seq, index: 0,
+      segStart: Date.now(), pausedTotal: 0, pauseStart: null,
+      isPaused:false, lastSecond:null, wakeLock:null
+    };
+    runOverlay.hidden = false;
+    runSkipBtn.hidden = false;
+    runCounterRow.hidden = true;
+    requestWakeLock();
+    renderRunSegment();
+    if(run.timerId) clearInterval(run.timerId);
+    run.timerId = setInterval(tickRun, 100);
+  }
+
+  function startFormatRun(kind, w, fmt){
+    if(!fmt) return;
+    ensureAudio();
+    var seq = kind==='amrap' ? buildAmrapSequence(w, fmt) : buildEmomSequence(w, fmt);
+    var totalRounds = kind==='emom' ? (seq.length-2) : null;
+    run = {
+      kind:kind, workout:w, format:fmt, totalRounds:totalRounds, sequence: seq, index: 0,
+      segStart: Date.now(), pausedTotal: 0, pauseStart: null,
+      isPaused:false, lastSecond:null, wakeLock:null, laps:0
+    };
+    runOverlay.hidden = false;
+    runSkipBtn.hidden = (kind==='amrap');
+    runCounterRow.hidden = (kind!=='amrap');
+    runCounterLabel.textContent = 'Kola: 0';
+    requestWakeLock();
+    renderRunSegment();
+    if(run.timerId) clearInterval(run.timerId);
+    run.timerId = setInterval(tickRun, 100);
+  }
+
+  function startStopwatchRun(w){
+    run = {
+      kind:'stopwatch', workout:w,
+      segStart: Date.now(), pausedTotal: 0, pauseStart: null,
+      isPaused:false, wakeLock:null
+    };
+    runOverlay.hidden = false;
+    runSkipBtn.hidden = true;
+    runCounterRow.hidden = true;
+    requestWakeLock();
+    renderStopwatchSegment();
+    if(run.timerId) clearInterval(run.timerId);
+    run.timerId = setInterval(tickRun, 100);
+  }
+
+  function renderStopwatchSegment(){
+    runOverlay.className = 'run-overlay phase-work';
+    runPhaseLabel.textContent = 'Stopky';
+    runPhaseLabel.className = 'run-phase-label work';
+    runExercise.textContent = run.workout ? run.workout.name : '';
+    runRound.textContent = '';
+    runNext.innerHTML = '';
+    runProgressBar.parentElement.style.display = 'none';
+    runTimer.textContent = '00:00';
+  }
+
+  function currentSeg(){ return run.sequence[run.index]; }
+
+  function renderRunSegment(){
+    runProgressBar.parentElement.style.display = '';
+    var seg = currentSeg();
+    var isActivePhase = (seg.phase==='work' || seg.phase==='amrap' || seg.phase==='emom');
+    var isRestPhase = (seg.phase==='rest' || seg.phase==='roundrest');
+    var bgPhase = (seg.phase==='amrap' || seg.phase==='emom') ? 'work' : seg.phase;
+    runOverlay.className = 'run-overlay phase-'+bgPhase;
+    runPhaseLabel.textContent = seg.phase==='prep' ? 'Připrav se' :
+      seg.phase==='work' ? 'Práce' :
+      seg.phase==='rest' ? 'Odpočinek' :
+      seg.phase==='roundrest' ? 'Odpočinek mezi koly' :
+      seg.phase==='amrap' ? 'AMRAP' :
+      seg.phase==='emom' ? 'EMOM' : 'Hotovo';
+    runPhaseLabel.className = 'run-phase-label ' + (isActivePhase?'work':(isRestPhase?'rest':''));
+    runExercise.textContent = (seg.phase==='work' || seg.phase==='amrap' || seg.phase==='emom') ? seg.label : (seg.phase==='done' ? 'Skvělá práce.' : '');
+
+    if(seg.phase==='done'){
+      runRound.textContent = 'Hotovo';
+    } else if(run.kind==='circuit'){
+      runRound.textContent = 'Kolo ' + seg.round + '/' + run.circuit.rounds;
+    } else if(run.kind==='emom'){
+      runRound.textContent = seg.round ? ('Minuta ' + seg.round + '/' + run.totalRounds) : ('Minuta 1/' + run.totalRounds);
+    } else if(run.kind==='amrap'){
+      runRound.textContent = 'AMRAP';
+    }
+
+    if(run.kind==='circuit'){
+      if(isRestPhase){
+        runNext.innerHTML = seg.nextLabel ? ('Další: <b>'+esc(seg.nextLabel)+'</b>') : '';
+      } else if(seg.phase==='prep'){
+        runNext.innerHTML = run.circuit.items[0] ? ('Začínáme: <b>'+esc(run.circuit.items[0].name)+'</b>') : '';
+      } else {
+        runNext.innerHTML = '';
+      }
+    } else {
+      runNext.innerHTML = (seg.exList && seg.exList.length) ? ('Cviky: <b>'+seg.exList.map(esc).join(' &middot; ')+'</b>') : '';
+    }
+
+    run.lastSecond = null;
+    if(seg.phase==='done'){
+      cueDone();
+      clearInterval(run.timerId);
+      runTimer.textContent = '00:00';
+      runProgressBar.style.width = '100%';
+      releaseWakeLock();
+    }
+  }
+
+  function fmtTime(totalSec){
+    totalSec = Math.max(0, Math.ceil(totalSec));
+    var m = Math.floor(totalSec/60), s = totalSec%60;
+    return (m<10?'0':'')+m + ':' + (s<10?'0':'')+s;
+  }
+  function fmtTimeUp(totalSec){
+    totalSec = Math.max(0, Math.floor(totalSec));
+    var m = Math.floor(totalSec/60), s = totalSec%60;
+    return (m<10?'0':'')+m + ':' + (s<10?'0':'')+s;
+  }
+
+  function tickRun(){
+    if(!run || run.isPaused) return;
+    if(run.kind==='stopwatch'){
+      var elapsedSw = (Date.now() - run.segStart - run.pausedTotal)/1000;
+      runTimer.textContent = fmtTimeUp(elapsedSw);
+      return;
+    }
+    var seg = currentSeg();
+    if(seg.phase==='done') return;
+    var elapsed = (Date.now() - run.segStart - run.pausedTotal)/1000;
+    var remaining = seg.duration - elapsed;
+    if(remaining <= 0){
+      advanceRun();
+      return;
+    }
+    var remainingCeil = Math.ceil(remaining);
+    runTimer.textContent = fmtTime(remaining);
+    runProgressBar.style.width = Math.min(100, (elapsed/seg.duration)*100) + '%';
+    if(remainingCeil !== run.lastSecond){
+      run.lastSecond = remainingCeil;
+      if(remainingCeil<=3 && remainingCeil>0) cueTick();
+    }
+  }
+
+  function advanceRun(){
+    run.index++;
+    run.segStart = Date.now();
+    run.pausedTotal = 0;
+    if(run.index >= run.sequence.length){ run.index = run.sequence.length-1; }
+    var seg = currentSeg();
+    if(seg.phase==='work' || seg.phase==='amrap' || seg.phase==='emom') cueGo();
+    else if(seg.phase==='rest' || seg.phase==='roundrest') cueRest();
+    renderRunSegment();
+  }
+
+  function pauseRun(){
+    if(!run || run.isPaused || (run.kind!=='stopwatch' && currentSeg().phase==='done')) return;
+    run.isPaused = true;
+    run.pauseStart = Date.now();
+    runPauseBtn.textContent = 'Pokračovat';
+  }
+  function resumeRun(){
+    if(!run || !run.isPaused) return;
+    run.pausedTotal += Date.now() - run.pauseStart;
+    run.isPaused = false;
+    runPauseBtn.textContent = 'Pauza';
+    requestWakeLock();
+  }
+  runPauseBtn.addEventListener('click', function(){
+    if(!run) return;
+    if(run.kind!=='stopwatch' && currentSeg().phase==='done'){ return; }
+    if(run.isPaused) resumeRun(); else pauseRun();
+  });
+  runSkipBtn.addEventListener('click', function(){
+    if(!run || run.kind==='stopwatch' || currentSeg().phase==='done') return;
+    advanceRun();
+  });
+  runStopBtn.addEventListener('click', function(){
+    if(runStopBtn.dataset.armed==='1'){
+      endRun();
+    } else {
+      runStopBtn.dataset.armed='1';
+      runStopBtn.textContent='Opravdu?';
+      setTimeout(function(){ runStopBtn.dataset.armed=''; runStopBtn.textContent='Konec'; }, 3000);
+    }
+  });
+  runSoundBtn.addEventListener('click', function(){
+    soundOn = !soundOn;
+    runSoundBtn.textContent = 'Zvuk: ' + (soundOn?'zap':'vyp');
+  });
+  runCounterBtn.addEventListener('click', function(){
+    if(!run || run.kind!=='amrap') return;
+    run.laps++;
+    runCounterLabel.textContent = 'Kola: ' + run.laps;
+    cueTick();
+  });
+
+  function endRun(){
+    if(run && run.timerId) clearInterval(run.timerId);
+    releaseWakeLock();
+    run = null;
+    runOverlay.hidden = true;
+    runStopBtn.dataset.armed='';
+    runStopBtn.textContent='Konec';
+    runPauseBtn.textContent='Pauza';
+  }
+
+  function requestWakeLock(){
+    if('wakeLock' in navigator){
+      navigator.wakeLock.request('screen').then(function(wl){
+        if(run) run.wakeLock = wl;
+      }).catch(function(){});
+    }
+  }
+  function releaseWakeLock(){
+    if(run && run.wakeLock){
+      try{ run.wakeLock.release(); }catch(e){}
+      run.wakeLock = null;
+    }
+  }
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState==='visible' && run && !run.isPaused && !runOverlay.hidden){
+      requestWakeLock();
+    }
+  });
+
+  function closeRunAndReturn(){
+    endRun();
+    render();
+  }
+  runOverlay.addEventListener('click', function(ev){
+    if(run && run.kind!=='stopwatch' && currentSeg().phase==='done' && ev.target===runOverlay){
+      closeRunAndReturn();
+    }
+  });
+  runExercise.addEventListener('click', function(){
+    if(run && run.kind!=='stopwatch' && currentSeg().phase==='done'){ closeRunAndReturn(); }
+  });
+
+  // ---------------- add-to-homescreen tip ----------------
+
+  function maybeShowTip(){
+    try{
+      if(localStorage.getItem(TIP_KEY)==='1') return;
+    }catch(e){}
+    var isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    var isStandalone = window.navigator.standalone === true;
+    if(!isIos || isStandalone) return;
+    var banner = document.createElement('div');
+    banner.className = 'tip-banner';
+    banner.style.margin = '4px 20px 0';
+    banner.innerHTML = '<span>Tip: přidej si Workout App na plochu přes tlačítko Sdílet &rarr; Přidat na plochu &ndash; pak se appka otevírá jako appka.</span>' +
+      '<button class="close" type="button" aria-label="Zavřít">&times;</button>';
+    document.body.insertBefore(banner, document.querySelector('.app'));
+    banner.querySelector('.close').addEventListener('click', function(){
+      banner.remove();
+      try{ localStorage.setItem(TIP_KEY,'1'); }catch(e){}
+    });
+  }
+
+  function checkStoragePersists(){
+    try{
+      var k = '__kruhac_storage_test__';
+      localStorage.setItem(k, '1');
+      var ok = localStorage.getItem(k) === '1';
+      localStorage.removeItem(k);
+      return ok;
+    }catch(e){ return false; }
+  }
+
+  function maybeShowStorageWarning(){
+    if(checkStoragePersists()) return;
+    var banner = document.createElement('div');
+    banner.className = 'tip-banner';
+    banner.style.margin = '4px 20px 0';
+    banner.style.borderColor = 'var(--danger)';
+    banner.style.color = 'var(--text)';
+    banner.innerHTML = '<span><b>Pozor:</b> tenhle prohlížeč neumí ukládat data natrvalo &ndash; po zavření karty nebo appky se tréninky ztratí. Nejčastěji to způsobuje soukromé prohlížení nebo zapnuté &bdquo;Zablokovat všechny cookies&ldquo; v Nastavení &rarr; Safari.</span>' +
+      '<button class="close" type="button" aria-label="Zavřít">&times;</button>';
+    document.body.insertBefore(banner, document.querySelector('.app'));
+    banner.querySelector('.close').addEventListener('click', function(){ banner.remove(); });
+  }
+
+  render();
+  maybeShowTip();
+  maybeShowStorageWarning();
+})();
+</script>
+
+<script>
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('sw.js').catch(function(){});
+    });
+  }
+</script>
+</body>
+</html>
